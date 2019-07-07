@@ -1,0 +1,4 @@
+/home/philos/Desktop/cam_catch/build/CMakeFiles/edit_cache.dir
+/home/philos/Desktop/cam_catch/build/CMakeFiles/rebuild_cache.dir
+/home/philos/Desktop/cam_catch/build/CMakeFiles/depth_refinement_lib.dir
+/home/philos/Desktop/cam_catch/build/CMakeFiles/catch.dir

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libdepth_refinement_lib.a  CMakeFiles/depth_refinement_lib.dir/depth_map_refinement/bilateralFilter.cpp.o CMakeFiles/depth_refinement_lib.dir/depth_map_refinement/depthFilter.cpp.o CMakeFiles/depth_refinement_lib.dir/depth_map_refinement/jointBilateralFilter.cpp.o CMakeFiles/depth_refinement_lib.dir/depth_map_refinement/jointNearest.cpp.o CMakeFiles/depth_refinement_lib.dir/depth_map_refinement/trilateralFilter.cpp.o CMakeFiles/depth_refinement_lib.dir/depth_map_refinement/split.cpp.o
+/usr/bin/ranlib libdepth_refinement_lib.a
