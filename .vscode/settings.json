@@ -51,6 +51,7 @@
         "dense": "cpp",
         "string_view": "cpp",
         "forward_list": "cpp",
-        "mutex": "cpp"
+        "mutex": "cpp",
+        "core": "cpp"
     }
 }

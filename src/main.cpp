@@ -39,6 +39,8 @@
 using namespace cv;
 using namespace std;
 
+
+
 Eigen::Matrix<double, 4, 4> final_transform;
 
 template <typename T>
@@ -59,27 +61,84 @@ double getDistance(vector<T> pointO, vector<T> pointA)
     return distance;
 }
 
+cv::Mat source_image,dst,img,tmp;
 void onMouse(int event, int x, int y, int flags, void *param)
 {
-    cv::Mat *im = reinterpret_cast<cv::Mat *>(param);
     Eigen::Matrix<double, 4, 1> test_point;
     test_point << x, y, 0, 1;
-    Eigen::Matrix<double, 4, 1> result_point = final_transform * test_point;
-    switch (event)
-    {
-    case CV_EVENT_LBUTTONDOWN:
+
+	static Point pre_pt(-1,-1);//初始坐标
+	static Point cur_pt(-1,-1);//实时坐标
+	char temp[16];
+	
+    if (event == CV_EVENT_LBUTTONDOWN && CV_EVENT_FLAG_CTRLKEY)//按住ctrl健，鼠标左键按下，读取初始坐标，并在图像上该点处划圆
+	{
+		source_image.copyTo(img);//将原始图片复制到img中
+		sprintf(temp,"(%d,%d)",x,y);
+		pre_pt = Point(x,y);
+		putText(img,temp,pre_pt,FONT_HERSHEY_SIMPLEX,0.5,Scalar(0,0,0,255),1,8);//在窗口上显示坐标
+		circle(img,pre_pt,2,Scalar(255,0,0,0),CV_FILLED,CV_AA,0);//划圆
+		imshow("img",img);
+	}
+    else if (event == CV_EVENT_RBUTTONDOWN)//不按住ctrl健，鼠标左键按下，读取初始坐标，并在图像上该点处划圆
+	{
+        Eigen::Matrix<double, 4, 1> result_point = final_transform * test_point;
+
+		source_image.copyTo(img);//将原始图片复制到img中
         cout << "at(" << x << "," << y << "), robot system coordinates are:" << result_point[0] << " " << result_point[1] << " " << result_point[2]
              << endl;
-
-        break;
-    }
+		imshow("img",img);
+	}
+	else if (event == CV_EVENT_MOUSEMOVE && !(flags & CV_EVENT_FLAG_LBUTTON))//左键没有按下的情况下鼠标移动的处理函数
+	{
+        source_image.copyTo(img);//将原始图片复制到img中
+		img.copyTo(tmp);//将img复制到临时图像tmp上，用于显示实时坐标
+		sprintf(temp,"(%d,%d)",x,y);
+		cur_pt = Point(x,y);
+		putText(tmp,temp,cur_pt,FONT_HERSHEY_SIMPLEX,0.5,Scalar(0,0,0,255));//只是实时显示鼠标移动的坐标
+		imshow("img",tmp);
+	}
+    else if (event == CV_EVENT_MOUSEMOVE && (flags & CV_EVENT_FLAG_LBUTTON) && CV_EVENT_FLAG_CTRLKEY)//按住ctrl健，鼠标左键按下时，鼠标移动，则在图像上划矩形
+	{
+        source_image.copyTo(img);//将原始图片复制到img中
+		img.copyTo(tmp);
+		sprintf(temp,"(%d,%d)",x,y);
+		cur_pt = Point(x,y);
+		putText(tmp,temp,cur_pt,FONT_HERSHEY_SIMPLEX,0.5,Scalar(0,0,0,255));
+		rectangle(tmp,pre_pt,cur_pt,Scalar(0,255,0,0),1,8,0);//在临时图像上实时显示鼠标拖动时形成的矩形
+		imshow("img",tmp);
+	}
+	else if (event == CV_EVENT_LBUTTONUP  && CV_EVENT_FLAG_CTRLKEY)//按住ctrl健，鼠标左键松开，将在图像上划矩形
+	{
+		source_image.copyTo(img);
+		sprintf(temp,"(%d,%d)",x,y);
+		cur_pt = Point(x,y);
+		putText(img,temp,cur_pt,FONT_HERSHEY_SIMPLEX,0.5,Scalar(0,0,0,255));
+		circle(img,pre_pt,2,Scalar(255,0,0,0),CV_FILLED,CV_AA,0);
+		rectangle(img,pre_pt,cur_pt,Scalar(0,255,0,0),1,8,0);//根据初始点和结束点，将矩形画到img上
+		imshow("img",img);
+		img.copyTo(tmp);
+		//截取矩形包围的图像，并保存到dst中
+		int width = abs(pre_pt.x - cur_pt.x);
+		int height = abs(pre_pt.y - cur_pt.y);
+		if (width == 0 || height == 0)
+		{
+			printf("width == 0 || height == 0");
+			return;
+		}
+		dst = source_image(Rect(min(cur_pt.x,pre_pt.x),min(cur_pt.y,pre_pt.y),width,height));
+		imwrite("../dst_cut.jpg",dst);//保存到本地路径下
+	}
 }
+
+
+
 
 int main(int argc, char *argv[])
 {
     //启动相机
     FrameCapture kinect_cam;
-    cv::namedWindow("point_in", WINDOW_AUTOSIZE);
+    cv::namedWindow("img", WINDOW_AUTOSIZE);
 
     while (1)
     {
@@ -92,14 +151,16 @@ int main(int argc, char *argv[])
         if (frame_now.empty())
         {
             cout << "no image capture!" << endl;
+            continue;
         }
-        Mat source_image = frame_now;
+        source_image = frame_now.clone();
         cv::Ptr<cv::aruco::Dictionary> dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_6X6_250);
         std::vector<int> ids;
         std::vector<std::vector<cv::Point2f>> corners;
         cv::aruco::detectMarkers(source_image, dictionary, corners, ids);
         Mat imageCopy;
         source_image.copyTo(imageCopy);
+
         if (ids.size() > 0)
         {
             cv::aruco::drawDetectedMarkers(imageCopy, corners, ids);
@@ -110,20 +171,19 @@ int main(int argc, char *argv[])
             circle(imageCopy, Point(corners[i][0].x, corners[i][0].y), 2, (0, 0, 255), -1);
         }
 
+        source_image=imageCopy;
         int num_point;
-        // double scale = 1;
-        // Size ResImgSiz = Size(imageCopy.cols * scale, imageCopy.rows * scale);
-        // Mat ResImg = Mat(ResImgSiz, imageCopy.type());
-        // resize(imageCopy, ResImg, ResImgSiz, CV_INTER_CUBIC);
-        cv::setMouseCallback("point_in", onMouse, reinterpret_cast<void *>(&imageCopy));
-        imshow("point_in", imageCopy);
+
+        cv::setMouseCallback("img", onMouse,0);
+        imshow("img", imageCopy);
+        
         int key;
         key = waitKey(1000 / 30);
         if (27 == (char)key)
         {
             if (ids.size() != 24)
             {
-                cout << " points are not enough!"<<endl;
+                cout << "points are not enough!"<<endl;
                 continue;
             }
             cout << "updating transformation...";
@@ -233,19 +293,6 @@ int main(int argc, char *argv[])
             cout << "new final transform:" << endl
                  << final_transform << endl;
         }
-
-        // Eigen::Matrix<double, 4, 1> test_point;
-        // test_point << source_image.cols / 2, source_image.rows / 2, 0, 1;
-
-        // Eigen::Matrix<double, 4, 1> result_point = final_transform * test_point;
-
-        // ofstream outfile;
-        // outfile.open("test_cor.txt", ios::binary | ios::app | ios::in | ios::out);
-        // outfile << result_point[0] << " " << result_point[1] << " " << result_point[2] << "\n";
-        // outfile.close(); //关闭文件，保存文件。
-        ////////////////////////
-
-        //std::cout << "good" << maxdis_in_robot << " " << maxdis_in_image;
     }
     return 1;
     //}
