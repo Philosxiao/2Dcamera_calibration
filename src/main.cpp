@@ -139,6 +139,7 @@ int main(int argc, char *argv[])
     //启动相机
     FrameCapture kinect_cam;
     cv::namedWindow("img", WINDOW_AUTOSIZE);
+    int i=1;
 
     while (1)
     {
@@ -179,7 +180,12 @@ int main(int argc, char *argv[])
         
         int key;
         key = waitKey(1000 / 30);
-        if (27 == (char)key)
+        if (27 == (char)key){
+           imwrite("../image/image_"+to_string(i)+".jpg",frame_now);
+           i++;
+        }
+
+        else if ('c' == (char)key)
         {
             if (ids.size() != 24)
             {
@@ -294,7 +300,7 @@ int main(int argc, char *argv[])
                  << final_transform << endl;
         }
         //loading the old matrix
-        if ('l' == (char)key){
+        else if ('l' == (char)key){
             final_transform<< 0.000102009, 0.0008186, 5.42583e-06, -0.287844,
                 0.000818614, -0.00010199, -3.21257e-06, 0.177021,
                 -2.51704e-06, 5.78141e-06, -0.000824925, 0.168851,
