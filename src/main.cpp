@@ -293,6 +293,14 @@ int main(int argc, char *argv[])
             cout << "new final transform:" << endl
                  << final_transform << endl;
         }
+        //loading the old matrix
+        if ('l' == (char)key){
+            final_transform<< 0.000102009, 0.0008186, 5.42583e-06, -0.287844,
+                0.000818614, -0.00010199, -3.21257e-06, 0.177021,
+                -2.51704e-06, 5.78141e-06, -0.000824925, 0.168851,
+                0.0, 0.0, 0, 1;
+                cout<<"loading successfully"<<endl;
+        }
     }
     return 1;
     //}

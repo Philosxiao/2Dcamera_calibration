@@ -35,6 +35,169 @@ from pykeyboard import PyKeyboard
 from transforms3d import quaternions
 import sys
 
+import intera_interface
+import intera_external_devices
+from intera_interface import CHECK_VERSION
+#######################################
+offset_in_end=np.array([0,0,0.185])                
+down_distance=np.array([0,0,0.065])
+coordinates_text=[down_distance[0]]
+#######################################
+
+
+
+def only_grip(limb,c):
+    # initialize interfaces
+    print("Getting robot state...")
+    rs = intera_interface.RobotEnable(CHECK_VERSION)
+    init_state = rs.state()
+    gripper = None
+    original_deadzone = None
+    def clean_shutdown():
+        if gripper and original_deadzone:
+            gripper.set_dead_zone(original_deadzone)
+        print("Exiting example.")
+    try:
+        gripper = intera_interface.Gripper(limb + '_gripper')
+    except (ValueError, OSError) as e:
+        rospy.logerr("Could not detect an electric gripper attached to the robot.")
+        clean_shutdown()
+        return
+    rospy.on_shutdown(clean_shutdown)
+
+    def offset_position(offset_pos):
+        cmd_pos = max(min(gripper.get_position() + offset_pos, gripper.MAX_POSITION), gripper.MIN_POSITION)
+        gripper.set_position(cmd_pos)
+        print("commanded position set to {0} m".format(cmd_pos))
+
+    def update_velocity(offset_vel):
+        cmd_speed = max(min(gripper.get_cmd_velocity() + offset_vel, gripper.MAX_VELOCITY), gripper.MIN_VELOCITY)
+        gripper.set_cmd_velocity(cmd_speed)
+        print("commanded velocity set to {0} m/s".format(cmd_speed))
+
+    original_deadzone = gripper.get_dead_zone()
+    # WARNING: setting the deadzone below this can cause oscillations in
+    # the gripper position. However, setting the deadzone to this
+    # value is required to achieve the incremental commands in this example
+    gripper.set_dead_zone(0.001)
+    rospy.loginfo("Gripper deadzone set to {}".format(gripper.get_dead_zone()))
+    num_steps = 8.0
+    percent_delta = 1.0 / num_steps
+    velocity_increment = (gripper.MAX_VELOCITY - gripper.MIN_VELOCITY) * percent_delta
+    position_increment = (gripper.MAX_POSITION - gripper.MIN_POSITION) * percent_delta
+    bindings = {
+    #   key: (function, args, description)
+        'r': (gripper.reboot, [], "reboot"),
+        'c': (gripper.calibrate, [], "calibrate"),
+        'q': (gripper.close, [], "close"),
+        'o': (gripper.open, [], "open"),
+        '+': (update_velocity, [velocity_increment], "increase velocity by {0}%".format(percent_delta*100)),
+        '-': (update_velocity, [-velocity_increment],"decrease velocity by {0}%".format(percent_delta*100)),
+        's': (gripper.stop, [], "stop"),
+        'u': (offset_position, [-position_increment], "decrease position by {0}%".format(percent_delta*100)),
+        'i': (offset_position, [position_increment], "increase position by {0}%".format(percent_delta*100)),
+    }
+
+    done = False
+    rospy.loginfo("Enabling robot...")
+    rs.enable()
+
+    print("Controlling grippers. Press ? for help, Esc to quit.")
+
+    if c:
+        if c in ['\x1b', '\x03']:
+            done = True
+        elif c in bindings:
+            cmd = bindings[c]
+            print("command: {0}".format(cmd[2]))
+            cmd[0](*cmd[1])
+        else:
+            print("key bindings: ")
+            print("  Esc: Quit")
+            print("  ?: Help")
+            for key, val in sorted(bindings.items(),
+                                    key=lambda x: x[1][2]):
+                print("  %s: %s" % (key, val[2]))
+        return
+    # force shutdown call if caught by key handler
+
+
+
+
+def map_keyboard(limb):
+    # initialize interfaces
+    print("Getting robot state...")
+    rs = intera_interface.RobotEnable(CHECK_VERSION)
+    init_state = rs.state()
+    gripper = None
+    original_deadzone = None
+    def clean_shutdown():
+        if gripper and original_deadzone:
+            gripper.set_dead_zone(original_deadzone)
+        print("Exiting example.")
+    try:
+        gripper = intera_interface.Gripper(limb + '_gripper')
+    except (ValueError, OSError) as e:
+        rospy.logerr("Could not detect an electric gripper attached to the robot.")
+        clean_shutdown()
+        return
+    rospy.on_shutdown(clean_shutdown)
+
+    def offset_position(offset_pos):
+        cmd_pos = max(min(gripper.get_position() + offset_pos, gripper.MAX_POSITION), gripper.MIN_POSITION)
+        gripper.set_position(cmd_pos)
+        print("commanded position set to {0} m".format(cmd_pos))
+
+    def update_velocity(offset_vel):
+        cmd_speed = max(min(gripper.get_cmd_velocity() + offset_vel, gripper.MAX_VELOCITY), gripper.MIN_VELOCITY)
+        gripper.set_cmd_velocity(cmd_speed)
+        print("commanded velocity set to {0} m/s".format(cmd_speed))
+
+    original_deadzone = gripper.get_dead_zone()
+    # WARNING: setting the deadzone below this can cause oscillations in
+    # the gripper position. However, setting the deadzone to this
+    # value is required to achieve the incremental commands in this example
+    gripper.set_dead_zone(0.001)
+    rospy.loginfo("Gripper deadzone set to {}".format(gripper.get_dead_zone()))
+    num_steps = 8.0
+    percent_delta = 1.0 / num_steps
+    velocity_increment = (gripper.MAX_VELOCITY - gripper.MIN_VELOCITY) * percent_delta
+    position_increment = (gripper.MAX_POSITION - gripper.MIN_POSITION) * percent_delta
+    bindings = {
+    #   key: (function, args, description)
+        'r': (gripper.reboot, [], "reboot"),
+        'c': (gripper.calibrate, [], "calibrate"),
+        'q': (gripper.close, [], "close"),
+        'o': (gripper.open, [], "open"),
+        '+': (update_velocity, [velocity_increment], "increase velocity by {0}%".format(percent_delta*100)),
+        '-': (update_velocity, [-velocity_increment],"decrease velocity by {0}%".format(percent_delta*100)),
+        's': (gripper.stop, [], "stop"),
+        'u': (offset_position, [-position_increment], "decrease position by {0}%".format(percent_delta*100)),
+        'i': (offset_position, [position_increment], "increase position by {0}%".format(percent_delta*100)),
+    }
+
+    done = False
+    rospy.loginfo("Enabling robot...")
+    rs.enable()
+    print("Controlling grippers. Press ? for help, Esc to quit.")
+    while not done and not rospy.is_shutdown():
+        c = intera_external_devices.getch()
+        if c:
+            if c in ['\x1b', '\x03']:
+                done = True
+            elif c in bindings:
+                cmd = bindings[c]
+                print("command: {0}".format(cmd[2]))
+                cmd[0](*cmd[1])
+            else:
+                print("key bindings: ")
+                print("  Esc: Quit")
+                print("  ?: Help")
+                for key, val in sorted(bindings.items(),
+                                       key=lambda x: x[1][2]):
+                    print("  %s: %s" % (key, val[2]))
+    # force shutdown call if caught by key handler
+
 def get_position_now(limb):
     current_pose = limb.endpoint_pose()
     #print (current_pose)
@@ -67,6 +230,82 @@ def get_position_now(limb):
         f.write(" ")
         f.write("\n")
 
+
+def go_to_the_point(target_point,args,limb,waypoint,traj):
+
+    target_point_x=target_point[0]
+    target_point_y=target_point[1]
+    target_point_z=target_point[2]
+
+                
+    if args.joint_angles and len(args.joint_angles) != len(joint_names):
+        rospy.logerr('len(joint_angles) does not match len(joint_names!)')
+        return None
+    if (args.position is None and args.orientation is None
+        and args.relative_pose is None):
+        if args.joint_angles:
+            waypoint.set_joint_angles(args.joint_angles, args.tip_name, joint_names)
+        else:
+            rospy.loginfo("No Cartesian pose or joint angles given. Using default")
+            waypoint.set_joint_angles(joint_angles=None, active_endpoint=args.tip_name)
+    else:
+
+        endpoint_state = limb.tip_state(args.tip_name)
+        if endpoint_state is None:
+            rospy.logerr('Endpoint state not found with tip name %s', args.tip_name)
+            return None
+        pose = endpoint_state.pose
+
+        if args.relative_pose is not None:
+            if len(args.relative_pose) != 6:
+                rospy.logerr('Relative pose needs to have 6 elements (x,y,z,roll,pitch,yaw)')
+                return None
+    # create kdl frame from relative pose
+            rot = PyKDL.Rotation.RPY(args.relative_pose[3],
+                                        args.relative_pose[4],
+                                        args.relative_pose[5])
+            trans = PyKDL.Vector(args.relative_pose[0],
+                                    args.relative_pose[1],
+                                    args.relative_pose[2])
+            f2 = PyKDL.Frame(rot, trans)
+    # and convert the result back to a pose message
+            if args.in_tip_frame:
+        # end effector frame
+                pose = posemath.toMsg(posemath.fromMsg(pose) * f2)
+            else:
+        # base frame
+                pose = posemath.toMsg(f2 * posemath.fromMsg(pose))
+        else:
+            if args.position is not None and len(args.position) == 3:
+                pose.position.x = target_point_x
+                pose.position.y = target_point_y
+                pose.position.z = target_point_z
+            if args.orientation is not None and len(args.orientation) == 4:
+                pose.orientation.x = args.orientation[0]
+                pose.orientation.y = args.orientation[1]
+                pose.orientation.z = args.orientation[2]
+                pose.orientation.w = args.orientation[3]                                        
+        poseStamped = PoseStamped()
+
+        matrix = quaternions.quat2mat([pose.orientation.w,pose.orientation.x,pose.orientation.y,pose.orientation.z])
+        pos_origin=np.array([pose.position.x,pose.position.y,pose.position.z])
+
+        hand_pos=pos_origin-np.dot(matrix,offset_in_end)
+        print(hand_pos)
+        pose.position.x=hand_pos[0]
+        pose.position.y=hand_pos[1]
+        pose.position.z=hand_pos[2]
+
+        poseStamped.pose = pose
+        waypoint.set_cartesian_pose(poseStamped, args.tip_name, args.joint_angles)
+                
+    rospy.loginfo('Sending waypoint: \n%s', waypoint.to_string())
+
+    traj.append_waypoint(waypoint.to_msg())
+
+    result = traj.send_trajectory(timeout=args.timeout)
+    return result
+
 def main():
     """
     Move the robot arm to the specified configuration.
@@ -89,9 +328,23 @@ def main():
     -> The fixed position and orientation paramters will be ignored if provided
 
     """
+
+    epilog = """
+See help inside the example with the '?' key for key bindings.
+    """
+
+    rp = intera_interface.RobotParams()
+    valid_limbs = rp.get_limb_names()
+    if not valid_limbs:
+        rp.log_message(("Cannot detect any limb parameters on this robot. "
+                    "Exiting."), "ERROR")
+        return
+
+
     arg_fmt = argparse.RawDescriptionHelpFormatter
     parser = argparse.ArgumentParser(formatter_class=arg_fmt,
-                                     description=main.__doc__)
+                                     description=main.__doc__,
+                                     epilog=epilog)
     parser.add_argument(
         "-r", "--record_point_pose", type=bool,default=0,
         nargs='+',
@@ -133,7 +386,13 @@ def main():
     parser.add_argument(
         "--timeout", type=float, default=None,
         help="Max time in seconds to complete motion goal before returning. None is interpreted as an infinite timeout.")
+    parser.add_argument(
+        "-l", "--limb", dest="limb", default=valid_limbs[0],
+        choices=valid_limbs,
+        help="Limb on which to run the gripper keyboard example"
+    )
     args = parser.parse_args(rospy.myargv()[1:])
+
 
     try:
         rospy.init_node('go_to_cartesian_pose_py')
@@ -167,85 +426,51 @@ def main():
 
             if ch=='r':
                 origin_trans=get_position_now(limb)
-            if ch=='b':
-                print('move back')
+            if ch=='g':
+                map_keyboard(args.limb)
             if ch=='q':
                 return None
+            if ch=='d':
+                only_grip(args.limb,'q')
+                coordinates_text=raw_input("type in coordinates:")
+
+                target_point=np.array([float(coordinates_text.split()[0]),float(coordinates_text.split()[1]),float(coordinates_text.split()[2])])
+                
+                traj_1 = MotionTrajectory(trajectory_options = traj_options, limb = limb)
+                waypoint_1 = MotionWaypoint(options = wpt_opts.to_msg(), limb = limb)
+
+                result_up=go_to_the_point(target_point,args,limb,waypoint_1,traj_1)
+                only_grip(args.limb,'o')
+
+                matrix = quaternions.quat2mat([args.orientation[3],args.orientation[0],args.orientation[1],args.orientation[2]])
+                down_point=target_point+np.dot(matrix,down_distance)
+                
+
+                traj_2 = MotionTrajectory(trajectory_options = traj_options, limb = limb)
+                waypoint_2 = MotionWaypoint(options = wpt_opts.to_msg(), limb = limb)
+                result_down=go_to_the_point(down_point,args,limb,waypoint_2,traj_2)
+
+                only_grip(args.limb,'q')
+
+                traj_3 = MotionTrajectory(trajectory_options = traj_options, limb = limb)
+                waypoint_3 = MotionWaypoint(options = wpt_opts.to_msg(), limb = limb)
+
+                result_up=go_to_the_point(target_point,args,limb,waypoint_3,traj_3)
+
+
+                traj_4 = MotionTrajectory(trajectory_options = traj_options, limb = limb)
+                waypoint_4 = MotionWaypoint(options = wpt_opts.to_msg(), limb = limb)
+                bin_point=np.array([0.35216134766,0.621893054464,0.371810527511])
+                result_up=go_to_the_point(bin_point,args,limb,waypoint_4,traj_4)
+                only_grip(args.limb,'o')
+
+
             if ch=='s':
-                offset_in_end=np.array([0,0,0.065])                
                 coordinates_text=raw_input("type in coordinates:")
                 print(coordinates_text.split())
                 print(float(coordinates_text.split()[2]))
-                target_point_x=float(coordinates_text.split()[0])
-                target_point_y=float(coordinates_text.split()[1])
-                target_point_z=float(coordinates_text.split()[2])
-                
-                if args.joint_angles and len(args.joint_angles) != len(joint_names):
-                    rospy.logerr('len(joint_angles) does not match len(joint_names!)')
-                    return None
-                if (args.position is None and args.orientation is None
-                    and args.relative_pose is None):
-                    if args.joint_angles:
-                        waypoint.set_joint_angles(args.joint_angles, args.tip_name, joint_names)
-                    else:
-                        rospy.loginfo("No Cartesian pose or joint angles given. Using default")
-                        waypoint.set_joint_angles(joint_angles=None, active_endpoint=args.tip_name)
-                else:
-
-                    endpoint_state = limb.tip_state(args.tip_name)
-                    if endpoint_state is None:
-                        rospy.logerr('Endpoint state not found with tip name %s', args.tip_name)
-                        return None
-                    pose = endpoint_state.pose
-
-                    if args.relative_pose is not None:
-                        if len(args.relative_pose) != 6:
-                            rospy.logerr('Relative pose needs to have 6 elements (x,y,z,roll,pitch,yaw)')
-                            return None
-                # create kdl frame from relative pose
-                        rot = PyKDL.Rotation.RPY(args.relative_pose[3],
-                                                 args.relative_pose[4],
-                                                 args.relative_pose[5])
-                        trans = PyKDL.Vector(args.relative_pose[0],
-                                             args.relative_pose[1],
-                                             args.relative_pose[2])
-                        f2 = PyKDL.Frame(rot, trans)
-                # and convert the result back to a pose message
-                        if args.in_tip_frame:
-                  # end effector frame
-                            pose = posemath.toMsg(posemath.fromMsg(pose) * f2)
-                        else:
-                  # base frame
-                            pose = posemath.toMsg(f2 * posemath.fromMsg(pose))
-                    else:
-                        if args.position is not None and len(args.position) == 3:
-                            pose.position.x = target_point_x
-                            pose.position.y = target_point_y
-                            pose.position.z = target_point_z
-                        if args.orientation is not None and len(args.orientation) == 4:
-                            pose.orientation.x = args.orientation[0]
-                            pose.orientation.y = args.orientation[1]
-                            pose.orientation.z = args.orientation[2]
-                            pose.orientation.w = args.orientation[3]                                        
-                    poseStamped = PoseStamped()
-
-                    matrix = quaternions.quat2mat([pose.orientation.w,pose.orientation.x,pose.orientation.y,pose.orientation.z])
-                    pos_origin=np.array([pose.position.x,pose.position.y,pose.position.z])
-
-                    hand_pos=pos_origin-np.dot(matrix,offset_in_end)
-                    print(hand_pos)
-                    pose.position.x=hand_pos[0]
-                    pose.position.y=hand_pos[1]
-                    pose.position.z=hand_pos[2]
-
-                    poseStamped.pose = pose
-                    waypoint.set_cartesian_pose(poseStamped, args.tip_name, args.joint_angles)
-                
-                rospy.loginfo('Sending waypoint: \n%s', waypoint.to_string())
-
-                traj.append_waypoint(waypoint.to_msg())
-
-                result = traj.send_trajectory(timeout=args.timeout)
+                target_point=[float(coordinates_text.split()[0]),float(coordinates_text.split()[1]),float(coordinates_text.split()[2])]
+                result=go_to_the_point(target_point,args,limb,waypoint,traj)
                 if result is None:
                     rospy.logerr('Trajectory FAILED to send')
                     return
