@@ -1,6 +1,11 @@
 //#include "camset.h"
+#include <Eigen/Eigen>
 #include <Eigen/QR>
 #include <Eigen/Dense>
+#include <Eigen/Geometry>
+#include <Eigen/Core>
+
+
 #include <pcl/io/vtk_io.h>
 #include <pcl/io/ply_io.h>
 #include <pcl/point_types.h>
@@ -39,7 +44,38 @@
 using namespace cv;
 using namespace std;
 
+float angle(float x1,float y1,float x2, float y2)
+{
+	float angle_temp;
+	float xx, yy;
+	xx = x2 - x1;
+	yy = y2 - y1;
+	if (xx == 0.0)
+		angle_temp = CV_PI / 2.0;
+	else
+		angle_temp = atan(fabs(yy / xx));
+ 
+	if ((xx < 0.0) && (yy >= 0.0))
+		angle_temp = CV_PI - angle_temp;
+	else if ((xx < 0.0) && (yy < 0.0))
+		angle_temp = CV_PI + angle_temp;
+	else if ((xx >= 0.0) && (yy < 0.0))
+		angle_temp = CV_PI * 2.0 - angle_temp;
+ 
+	return (angle_temp);
+}
 
+Eigen::Quaterniond rotationMatrix2Quaterniond(Eigen::Matrix3d R)
+{
+    Eigen::Quaterniond q = Eigen::Quaterniond(R);
+    q.normalize();
+    cout << "RotationMatrix2Quaterniond result is:" <<endl;
+    cout << "x = " << q.x() <<endl;
+    cout << "y = " << q.y() <<endl;
+    cout << "z = " << q.z() <<endl;
+    cout << "w = " << q.w() <<endl<<endl;
+    return q;
+}
 
 Eigen::Matrix<double, 4, 4> final_transform;
 
@@ -80,6 +116,49 @@ void onMouse(int event, int x, int y, int flags, void *param)
 		circle(img,pre_pt,2,Scalar(255,0,0,0),CV_FILLED,CV_AA,0);//划圆
 		imshow("img",img);
 	}
+    else if (event == CV_EVENT_RBUTTONDOWN && CV_EVENT_FLAG_CTRLKEY)//按住ctrl健，鼠标右键按下，读取初始坐标，并在图像上该点处划圆
+	{
+		source_image.copyTo(img);//将原始图片复制到img中
+		sprintf(temp,"(%d,%d)",x,y);
+		pre_pt = Point(x,y);
+		putText(img,temp,pre_pt,FONT_HERSHEY_SIMPLEX,0.5,Scalar(0,0,0,255),1,8);//在窗口上显示坐标
+		circle(img,pre_pt,2,Scalar(255,0,0,0),CV_FILLED,CV_AA,0);//划圆
+		imshow("img",img);
+	}
+    
+    else if (event == CV_EVENT_MOUSEMOVE && (flags & CV_EVENT_FLAG_RBUTTON) && CV_EVENT_FLAG_CTRLKEY)//按住ctrl健，鼠标右键按下时，鼠标移动，则在图像上划矩形
+	{
+        source_image.copyTo(img);//将原始图片复制到img中
+		img.copyTo(tmp);
+		sprintf(temp,"(%d,%d)",x,y);
+		cur_pt = Point(x,y);
+		putText(tmp,temp,cur_pt,FONT_HERSHEY_SIMPLEX,0.5,Scalar(0,0,0,255));
+        line(tmp,pre_pt,cur_pt,Scalar(0,0,255),5);//在临时图像上实时显示鼠标拖动时形成的线条
+		imshow("img",tmp);
+	}
+    else if (event == CV_EVENT_RBUTTONUP && CV_EVENT_FLAG_CTRLKEY)//按住ctrl健，鼠标左键按下，读取初始坐标，并在图像上该点处划圆
+	{
+		source_image.copyTo(img);//将原始图片复制到img中
+		sprintf(temp,"(%d,%d)",x,y);
+		cur_pt = Point(x,y);
+		putText(img,temp,pre_pt,FONT_HERSHEY_SIMPLEX,0.5,Scalar(0,0,0,255),1,8);//在窗口上显示坐标
+		circle(img,pre_pt,2,Scalar(255,0,0,0),CV_FILLED,CV_AA,0);//划圆
+        Eigen::Matrix<double, 4, 1> pre_point;
+        pre_point << pre_pt.x, pre_pt.y, 0, 1;
+        Eigen::Matrix<double, 4, 1> result_target_point = final_transform * pre_point;
+        cout << "at(" << x << "," << y << "), robot system position are:" << result_target_point[0] << " " << result_target_point[1] << " " << result_target_point[2]
+             << endl;
+        
+        float pick_angle=angle(pre_pt.x,pre_pt.y,cur_pt.x,cur_pt.y);
+        cout<<"angle is "<<pick_angle<<endl;
+        Eigen::Matrix3d R_angle;
+
+
+		imshow("img",img);
+	}
+
+
+
     else if (event == CV_EVENT_RBUTTONDOWN)//不按住ctrl健，鼠标左键按下，读取初始坐标，并在图像上该点处划圆
 	{
         Eigen::Matrix<double, 4, 1> result_point = final_transform * test_point;

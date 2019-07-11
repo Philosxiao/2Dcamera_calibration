@@ -1,0 +1,70 @@
+{
+  "imagePath": "image_8.jpg", 
+  "imageData": null, 
+  "shapes": [
+    {
+      "shape_type": "rectangle", 
+      "line_color": null, 
+      "points": [
+        [
+          668, 
+          230
+        ], 
+        [
+          738, 
+          302
+        ]
+      ], 
+      "fill_color": null, 
+      "label": "t"
+    }, 
+    {
+      "shape_type": "rectangle", 
+      "line_color": null, 
+      "points": [
+        [
+          751, 
+          191
+        ], 
+        [
+          820, 
+          254
+        ]
+      ], 
+      "fill_color": null, 
+      "label": "t"
+    }, 
+    {
+      "shape_type": "rectangle", 
+      "line_color": null, 
+      "points": [
+        [
+          727, 
+          332
+        ], 
+        [
+          808, 
+          380
+        ]
+      ], 
+      "fill_color": null, 
+      "label": "t"
+    }
+  ], 
+  "version": "3.9.1", 
+  "flags": {}, 
+  "fillColor": [
+    255, 
+    0, 
+    0, 
+    128
+  ], 
+  "lineColor": [
+    0, 
+    255, 
+    0, 
+    128
+  ], 
+  "imageWidth": 1920, 
+  "imageHeight": 1080
+}

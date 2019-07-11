@@ -1,0 +1,86 @@
+{
+  "imagePath": "image_23.jpg", 
+  "imageData": null, 
+  "shapes": [
+    {
+      "shape_type": "rectangle", 
+      "line_color": null, 
+      "points": [
+        [
+          668, 
+          146
+        ], 
+        [
+          742, 
+          209
+        ]
+      ], 
+      "fill_color": null, 
+      "label": "t"
+    }, 
+    {
+      "shape_type": "rectangle", 
+      "line_color": null, 
+      "points": [
+        [
+          809, 
+          189
+        ], 
+        [
+          863, 
+          263
+        ]
+      ], 
+      "fill_color": null, 
+      "label": "t"
+    }, 
+    {
+      "shape_type": "rectangle", 
+      "line_color": null, 
+      "points": [
+        [
+          742, 
+          242
+        ], 
+        [
+          781, 
+          309
+        ]
+      ], 
+      "fill_color": null, 
+      "label": "t"
+    }, 
+    {
+      "shape_type": "rectangle", 
+      "line_color": null, 
+      "points": [
+        [
+          765, 
+          348
+        ], 
+        [
+          853, 
+          418
+        ]
+      ], 
+      "fill_color": null, 
+      "label": "t"
+    }
+  ], 
+  "version": "3.9.1", 
+  "flags": {}, 
+  "fillColor": [
+    255, 
+    0, 
+    0, 
+    128
+  ], 
+  "lineColor": [
+    0, 
+    255, 
+    0, 
+    128
+  ], 
+  "imageWidth": 1920, 
+  "imageHeight": 1080
+}

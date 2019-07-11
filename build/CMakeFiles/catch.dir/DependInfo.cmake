@@ -6,6 +6,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 set(CMAKE_DEPENDS_CHECK_CXX
   "/home/philos/Desktop/cam_catch/src/Timer.cpp" "/home/philos/Desktop/cam_catch/build/CMakeFiles/catch.dir/src/Timer.cpp.o"
   "/home/philos/Desktop/cam_catch/src/depthRegistration.cpp" "/home/philos/Desktop/cam_catch/build/CMakeFiles/catch.dir/src/depthRegistration.cpp.o"
+  "/home/philos/Desktop/cam_catch/src/euler.cpp" "/home/philos/Desktop/cam_catch/build/CMakeFiles/catch.dir/src/euler.cpp.o"
   "/home/philos/Desktop/cam_catch/src/frameCapture.cpp" "/home/philos/Desktop/cam_catch/build/CMakeFiles/catch.dir/src/frameCapture.cpp.o"
   "/home/philos/Desktop/cam_catch/src/main.cpp" "/home/philos/Desktop/cam_catch/build/CMakeFiles/catch.dir/src/main.cpp.o"
   "/home/philos/Desktop/cam_catch/src/streamRetrieve.cpp" "/home/philos/Desktop/cam_catch/build/CMakeFiles/catch.dir/src/streamRetrieve.cpp.o"

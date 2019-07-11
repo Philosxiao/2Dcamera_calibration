@@ -4,6 +4,7 @@ file(REMOVE_RECURSE
   "CMakeFiles/catch.dir/src/frameCapture.cpp.o"
   "CMakeFiles/catch.dir/src/Timer.cpp.o"
   "CMakeFiles/catch.dir/src/depthRegistration.cpp.o"
+  "CMakeFiles/catch.dir/src/euler.cpp.o"
   "catch.pdb"
   "catch"
 )

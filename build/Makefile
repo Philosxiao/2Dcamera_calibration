@@ -352,6 +352,33 @@ src/depthRegistration.cpp.s:
 	$(MAKE) -f CMakeFiles/catch.dir/build.make CMakeFiles/catch.dir/src/depthRegistration.cpp.s
 .PHONY : src/depthRegistration.cpp.s
 
+src/euler.o: src/euler.cpp.o
+
+.PHONY : src/euler.o
+
+# target to build an object file
+src/euler.cpp.o:
+	$(MAKE) -f CMakeFiles/catch.dir/build.make CMakeFiles/catch.dir/src/euler.cpp.o
+.PHONY : src/euler.cpp.o
+
+src/euler.i: src/euler.cpp.i
+
+.PHONY : src/euler.i
+
+# target to preprocess a source file
+src/euler.cpp.i:
+	$(MAKE) -f CMakeFiles/catch.dir/build.make CMakeFiles/catch.dir/src/euler.cpp.i
+.PHONY : src/euler.cpp.i
+
+src/euler.s: src/euler.cpp.s
+
+.PHONY : src/euler.s
+
+# target to generate assembly for a file
+src/euler.cpp.s:
+	$(MAKE) -f CMakeFiles/catch.dir/build.make CMakeFiles/catch.dir/src/euler.cpp.s
+.PHONY : src/euler.cpp.s
+
 src/frameCapture.o: src/frameCapture.cpp.o
 
 .PHONY : src/frameCapture.o
@@ -467,6 +494,9 @@ help:
 	@echo "... src/depthRegistration.o"
 	@echo "... src/depthRegistration.i"
 	@echo "... src/depthRegistration.s"
+	@echo "... src/euler.o"
+	@echo "... src/euler.i"
+	@echo "... src/euler.s"
 	@echo "... src/frameCapture.o"
 	@echo "... src/frameCapture.i"
 	@echo "... src/frameCapture.s"

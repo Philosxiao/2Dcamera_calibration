@@ -1,0 +1,38 @@
+{
+  "imagePath": "image_3.jpg", 
+  "imageData": null, 
+  "shapes": [
+    {
+      "shape_type": "rectangle", 
+      "line_color": null, 
+      "points": [
+        [
+          657, 
+          232
+        ], 
+        [
+          708, 
+          310
+        ]
+      ], 
+      "fill_color": null, 
+      "label": "t"
+    }
+  ], 
+  "version": "3.9.1", 
+  "flags": {}, 
+  "fillColor": [
+    255, 
+    0, 
+    0, 
+    128
+  ], 
+  "lineColor": [
+    0, 
+    255, 
+    0, 
+    128
+  ], 
+  "imageWidth": 1920, 
+  "imageHeight": 1080
+}

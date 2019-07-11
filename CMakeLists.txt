@@ -26,6 +26,7 @@ src/frameCapture.cpp
 src/Timer.cpp
 src/frameCapture.cpp
 src/depthRegistration.cpp
+src/euler.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} ${freenect2_LIBRARIES} )
