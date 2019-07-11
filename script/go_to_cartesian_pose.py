@@ -39,9 +39,9 @@ import intera_interface
 import intera_external_devices
 from intera_interface import CHECK_VERSION
 #######################################
-offset_in_end=np.array([0,0,0.185])                
-down_distance=np.array([0,0,0.065])
-coordinates_text=[down_distance[0]]
+offset_in_end=np.array([0,0,0.185])#length safty before pick                
+down_distance=np.array([0,0,0.065])#pick down distance
+offset_probe=np.array([0,0,0.065])#the length of probe, add it when standardize
 #######################################
 
 
@@ -123,7 +123,6 @@ def only_grip(limb,c):
 
 
 
-
 def map_keyboard(limb):
     # initialize interfaces
     print("Getting robot state...")
@@ -200,7 +199,6 @@ def map_keyboard(limb):
 
 def get_position_now(limb):
     current_pose = limb.endpoint_pose()
-    #print (current_pose)
     x = current_pose['position'].x
     y = current_pose['position'].y
     z = current_pose['position'].z 
@@ -211,8 +209,7 @@ def get_position_now(limb):
     w = current_pose['orientation'].w        
     matrix = quaternions.quat2mat([w,rx,ry,rz])
     pos_origin=np.array([x,y,z])
-    offset=np.array([0,0,0.065])
-    pos=np.dot(matrix,offset)+pos_origin
+    pos=np.dot(matrix,offset_probe)+pos_origin
     x=pos[0]
     y=pos[1]
     z=pos[2]
@@ -231,12 +228,17 @@ def get_position_now(limb):
         f.write("\n")
 
 
-def go_to_the_point(target_point,args,limb,waypoint,traj):
+def go_to_the_point(target_point,args,limb,waypoint,traj,target_quaterniond=[0.0,1.0,0.0,0.0]):
 
     target_point_x=target_point[0]
     target_point_y=target_point[1]
     target_point_z=target_point[2]
 
+    
+    target_quaterniond_x = target_quaterniond[0]
+    target_quaterniond_y = target_quaterniond[1]
+    target_quaterniond_z = target_quaterniond[2]
+    target_quaterniond_w = target_quaterniond[3]
                 
     if args.joint_angles and len(args.joint_angles) != len(joint_names):
         rospy.logerr('len(joint_angles) does not match len(joint_names!)')
@@ -280,11 +282,11 @@ def go_to_the_point(target_point,args,limb,waypoint,traj):
                 pose.position.x = target_point_x
                 pose.position.y = target_point_y
                 pose.position.z = target_point_z
-            if args.orientation is not None and len(args.orientation) == 4:
-                pose.orientation.x = args.orientation[0]
-                pose.orientation.y = args.orientation[1]
-                pose.orientation.z = args.orientation[2]
-                pose.orientation.w = args.orientation[3]                                        
+            #if args.orientation is not None and len(args.orientation) == 4:
+                pose.orientation.x = target_quaterniond_x
+                pose.orientation.y = target_quaterniond_y
+                pose.orientation.z = target_quaterniond_z
+                pose.orientation.w = target_quaterniond_w                                        
         poseStamped = PoseStamped()
 
         matrix = quaternions.quat2mat([pose.orientation.w,pose.orientation.x,pose.orientation.y,pose.orientation.z])
@@ -439,7 +441,7 @@ See help inside the example with the '?' key for key bindings.
                 traj_1 = MotionTrajectory(trajectory_options = traj_options, limb = limb)
                 waypoint_1 = MotionWaypoint(options = wpt_opts.to_msg(), limb = limb)
 
-                result_up=go_to_the_point(target_point,args,limb,waypoint_1,traj_1)
+                result_up=go_to_the_point(target_point,args=args,limb=limb,waypoint=waypoint_1,traj=traj_1)
                 only_grip(args.limb,'o')
 
                 matrix = quaternions.quat2mat([args.orientation[3],args.orientation[0],args.orientation[1],args.orientation[2]])
@@ -448,29 +450,35 @@ See help inside the example with the '?' key for key bindings.
 
                 traj_2 = MotionTrajectory(trajectory_options = traj_options, limb = limb)
                 waypoint_2 = MotionWaypoint(options = wpt_opts.to_msg(), limb = limb)
-                result_down=go_to_the_point(down_point,args,limb,waypoint_2,traj_2)
+                result_down=go_to_the_point(down_point,args=args,limb=limb,waypoint=waypoint_2,traj=traj_2)
 
                 only_grip(args.limb,'q')
 
                 traj_3 = MotionTrajectory(trajectory_options = traj_options, limb = limb)
                 waypoint_3 = MotionWaypoint(options = wpt_opts.to_msg(), limb = limb)
 
-                result_up=go_to_the_point(target_point,args,limb,waypoint_3,traj_3)
+                result_up=go_to_the_point(target_point,args=args,limb=limb,waypoint=waypoint_3,traj=traj_3)
 
 
                 traj_4 = MotionTrajectory(trajectory_options = traj_options, limb = limb)
                 waypoint_4 = MotionWaypoint(options = wpt_opts.to_msg(), limb = limb)
+
                 bin_point=np.array([0.35216134766,0.621893054464,0.371810527511])
+
                 result_up=go_to_the_point(bin_point,args,limb,waypoint_4,traj_4)
                 only_grip(args.limb,'o')
 
 
             if ch=='s':
-                coordinates_text=raw_input("type in coordinates:")
+                coordinates_text=raw_input("type in coordinates and quaterniond:")
                 print(coordinates_text.split())
-                print(float(coordinates_text.split()[2]))
                 target_point=[float(coordinates_text.split()[0]),float(coordinates_text.split()[1]),float(coordinates_text.split()[2])]
-                result=go_to_the_point(target_point,args,limb,waypoint,traj)
+                target_quaterniond=[float(coordinates_text.split()[3]),float(coordinates_text.split()[4]),float(coordinates_text.split()[5]),float(coordinates_text.split()[6])]
+
+                traj_new = MotionTrajectory(trajectory_options = traj_options, limb = limb)
+                waypoint_new = MotionWaypoint(options = wpt_opts.to_msg(), limb = limb)
+
+                result=go_to_the_point(target_point,args=args,limb=limb,waypoint=waypoint_new,traj=traj_new,target_quaterniond=target_quaterniond)
                 if result is None:
                     rospy.logerr('Trajectory FAILED to send')
                     return
