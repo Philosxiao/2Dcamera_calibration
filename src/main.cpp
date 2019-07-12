@@ -136,7 +136,7 @@ void onMouse(int event, int x, int y, int flags, void *param)
         line(tmp,pre_pt,cur_pt,Scalar(0,0,255),5);//在临时图像上实时显示鼠标拖动时形成的线条
 		imshow("img",tmp);
 	}
-    else if (event == CV_EVENT_RBUTTONUP && CV_EVENT_FLAG_CTRLKEY)//按住ctrl健，鼠标左键按下，读取初始坐标，并在图像上该点处划圆
+    else if (event == CV_EVENT_RBUTTONUP && CV_EVENT_FLAG_CTRLKEY)//按住ctrl健，鼠标右键按下，读取初始坐标，并在图像上该点处划圆
 	{
 		source_image.copyTo(img);//将原始图片复制到img中
 		sprintf(temp,"(%d,%d)",x,y);
@@ -146,18 +146,16 @@ void onMouse(int event, int x, int y, int flags, void *param)
         Eigen::Matrix<double, 4, 1> pre_point;
         pre_point << pre_pt.x, pre_pt.y, 0, 1;
         Eigen::Matrix<double, 4, 1> result_target_point = final_transform * pre_point;
-        cout << "at(" << x << "," << y << "), robot system position are:" << result_target_point[0] << " " << result_target_point[1] << " " << result_target_point[2]
-             << endl;
+
         
         float pick_angle=angle(pre_pt.x,pre_pt.y,cur_pt.x,cur_pt.y);
-        cout<<"angle is "<<pick_angle<<endl;
+        cout << "at(" << x << "," << y << "), robot system position are:" << result_target_point[0] << " " << result_target_point[1] << " " << result_target_point[2]
+             <<" "<<pick_angle<< endl;
+        //cout<<"angle is "<<pick_angle<<endl;
         Eigen::Matrix3d R_angle;
-
 
 		imshow("img",img);
 	}
-
-
 
     else if (event == CV_EVENT_RBUTTONDOWN)//不按住ctrl健，鼠标左键按下，读取初始坐标，并在图像上该点处划圆
 	{
@@ -380,10 +378,10 @@ int main(int argc, char *argv[])
         }
         //loading the old matrix
         else if ('l' == (char)key){
-            final_transform<< 0.000102009, 0.0008186, 5.42583e-06, -0.287844,
-                0.000818614, -0.00010199, -3.21257e-06, 0.177021,
-                -2.51704e-06, 5.78141e-06, -0.000824925, 0.168851,
-                0.0, 0.0, 0, 1;
+            final_transform<< 0.000210185,0.000806514,-6.792e-06,-0.35334,
+                0.00080654,-0.000210195,-3.42031e-07,0.217142,
+                2.04384e-06,-6.48622e-06,-0.000833452,0.171707,
+                0.0,0.0,0.0,1.0;
                 cout<<"loading successfully"<<endl;
         }
     }

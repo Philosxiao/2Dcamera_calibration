@@ -38,13 +38,25 @@ import sys
 import intera_interface
 import intera_external_devices
 from intera_interface import CHECK_VERSION
+
 #######################################
 offset_in_end=np.array([0,0,0.185])#length safty before pick                
-down_distance=np.array([0,0,0.065])#pick down distance
+down_distance=np.array([0,0,0.050])#pick down distance
 offset_probe=np.array([0,0,0.065])#the length of probe, add it when standardize
 #######################################
 
 
+
+def quaternions_after_rotation(change_quaternions,angle):
+    if angle>np.pi:
+        angle=angle-np.pi
+    old_matrix = quaternions.quat2mat(change_quaternions)
+
+    rotationa_matrix=np.array([[np.cos(angle),-np.sin(angle),0],[np.sin(angle),np.cos(angle),0],[0,0,1]])
+    
+    new_matrix=np.dot(rotationa_matrix,old_matrix)
+    new_quat = quaternions.mat2quat(new_matrix) 
+    return new_quat
 
 def only_grip(limb,c):
     # initialize interfaces
@@ -234,7 +246,6 @@ def go_to_the_point(target_point,args,limb,waypoint,traj,target_quaterniond=[0.0
     target_point_y=target_point[1]
     target_point_z=target_point[2]
 
-    
     target_quaterniond_x = target_quaterniond[0]
     target_quaterniond_y = target_quaterniond[1]
     target_quaterniond_z = target_quaterniond[2]
@@ -286,7 +297,8 @@ def go_to_the_point(target_point,args,limb,waypoint,traj,target_quaterniond=[0.0
                 pose.orientation.x = target_quaterniond_x
                 pose.orientation.y = target_quaterniond_y
                 pose.orientation.z = target_quaterniond_z
-                pose.orientation.w = target_quaterniond_w                                        
+                pose.orientation.w = target_quaterniond_w
+
         poseStamped = PoseStamped()
 
         matrix = quaternions.quat2mat([pose.orientation.w,pose.orientation.x,pose.orientation.y,pose.orientation.z])
@@ -422,6 +434,9 @@ See help inside the example with the '?' key for key bindings.
             origin_trans=get_position_now(limb)
             return None
         
+        base_quaternions=np.array([0.0,0.0,1.0,0.0])
+        bin_point=np.array([0.35216134766,0.621893054464,0.371810527511])
+        base_angle=0.0
         while not rospy.is_shutdown():
 
             ch=raw_input("waiting for next step:")
@@ -430,6 +445,21 @@ See help inside the example with the '?' key for key bindings.
                 origin_trans=get_position_now(limb)
             if ch=='g':
                 map_keyboard(args.limb)
+            if ch=='p':
+                coordinates_text=raw_input("type in coordinates:")
+                base_angle=float(coordinates_text)
+                # if float(coordinates_text)>np.pi:
+                #     base_rotated_angle=2*np.pi-float(coordinates_text)
+                # else:
+                #     base_rotated_angle=np.pi-float(coordinates_text)
+                # base_firest=np.array([0.0,0.0,1.0,0.0])
+
+                # base_quaternions=quaternions_after_rotation(base_firest,base_rotated_angle)
+                # print("After reset the rotated, base quaternions are:")
+                # print(base_quaternions)
+            if ch=='drop':
+                coordinates_text=raw_input("type in coordinates:")
+                bin_point=np.array([float(coordinates_text.split()[0]),float(coordinates_text.split()[1]),float(coordinates_text.split()[2])])
             if ch=='q':
                 return None
             if ch=='d':
@@ -437,45 +467,67 @@ See help inside the example with the '?' key for key bindings.
                 coordinates_text=raw_input("type in coordinates:")
 
                 target_point=np.array([float(coordinates_text.split()[0]),float(coordinates_text.split()[1]),float(coordinates_text.split()[2])])
+                pick_angle=float(coordinates_text.split()[3])
+
+
+
+                pick_angle=float(coordinates_text.split()[3])-base_angle
+                pick_angle=-pick_angle
+
+
+                temp=base_quaternions
+                target_after=quaternions_after_rotation(temp,pick_angle)
+
+                grip_rotated_this_time=target_after
+
+                pick_quaternions=[float(grip_rotated_this_time[1]),float(grip_rotated_this_time[2]),float(grip_rotated_this_time[3]),float(grip_rotated_this_time[0])]
                 
+
                 traj_1 = MotionTrajectory(trajectory_options = traj_options, limb = limb)
                 waypoint_1 = MotionWaypoint(options = wpt_opts.to_msg(), limb = limb)
 
-                result_up=go_to_the_point(target_point,args=args,limb=limb,waypoint=waypoint_1,traj=traj_1)
+                result_up=go_to_the_point(target_point,args=args,limb=limb,waypoint=waypoint_1,traj=traj_1,target_quaterniond=pick_quaternions)
                 only_grip(args.limb,'o')
 
-                matrix = quaternions.quat2mat([args.orientation[3],args.orientation[0],args.orientation[1],args.orientation[2]])
+                matrix = quaternions.quat2mat([pick_quaternions[3],pick_quaternions[0],pick_quaternions[1],pick_quaternions[2]])
                 down_point=target_point+np.dot(matrix,down_distance)
                 
 
                 traj_2 = MotionTrajectory(trajectory_options = traj_options, limb = limb)
                 waypoint_2 = MotionWaypoint(options = wpt_opts.to_msg(), limb = limb)
-                result_down=go_to_the_point(down_point,args=args,limb=limb,waypoint=waypoint_2,traj=traj_2)
+                result_down=go_to_the_point(down_point,args=args,limb=limb,waypoint=waypoint_2,traj=traj_2,target_quaterniond=pick_quaternions)
 
                 only_grip(args.limb,'q')
 
                 traj_3 = MotionTrajectory(trajectory_options = traj_options, limb = limb)
                 waypoint_3 = MotionWaypoint(options = wpt_opts.to_msg(), limb = limb)
 
-                result_up=go_to_the_point(target_point,args=args,limb=limb,waypoint=waypoint_3,traj=traj_3)
+                result_up=go_to_the_point(target_point,args=args,limb=limb,waypoint=waypoint_3,traj=traj_3,target_quaterniond=pick_quaternions)
 
 
                 traj_4 = MotionTrajectory(trajectory_options = traj_options, limb = limb)
                 waypoint_4 = MotionWaypoint(options = wpt_opts.to_msg(), limb = limb)
 
-                bin_point=np.array([0.35216134766,0.621893054464,0.371810527511])
 
-                result_up=go_to_the_point(bin_point,args,limb,waypoint_4,traj_4)
+                result_up=go_to_the_point(bin_point,args,limb,waypoint_4,traj_4,target_quaterniond=pick_quaternions)
                 only_grip(args.limb,'o')
 
 
-            if ch=='s':
-                coordinates_text=raw_input("type in coordinates and quaterniond:")
-                print(coordinates_text.split())
+            if ch=='s':                
+                coordinates_text=raw_input("type in coordinates and rotation angle:")
                 target_point=[float(coordinates_text.split()[0]),float(coordinates_text.split()[1]),float(coordinates_text.split()[2])]
-                target_quaterniond=[float(coordinates_text.split()[3]),float(coordinates_text.split()[4]),float(coordinates_text.split()[5]),float(coordinates_text.split()[6])]
+                rotatain_angle_from_base=float(coordinates_text.split()[3])-base_angle
+                rotatain_angle_from_base=-rotatain_angle_from_base
 
+                temp=base_quaternions
+                target_after=quaternions_after_rotation(temp,rotatain_angle_from_base)
+
+                grip_rotated_this_time=target_after
+
+                target_quaterniond=[float(grip_rotated_this_time[1]),float(grip_rotated_this_time[2]),float(grip_rotated_this_time[3]),float(grip_rotated_this_time[0])]
+                
                 traj_new = MotionTrajectory(trajectory_options = traj_options, limb = limb)
+                
                 waypoint_new = MotionWaypoint(options = wpt_opts.to_msg(), limb = limb)
 
                 result=go_to_the_point(target_point,args=args,limb=limb,waypoint=waypoint_new,traj=traj_new,target_quaterniond=target_quaterniond)
